@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>System Reports</title>
+<link rel="stylesheet" href="stalk.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+
+<script>
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user || user.group_no !== 1) {
+window.location.href = "logol.html";
+}
+</script>
+
+
+<div class="top-bar">
+<a href="index.html" class="btn secondary">⬅ Back</a>
+<h2>System Reports</h2>
+<button class="btn danger" onclick="logout()">🚪 Logout</button>
+</div>
+
+
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+<th>Date & Time</th>
+<th>Admin</th>
+<th>Action</th>
+<th>Target</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody id="reportTable">
+<tr><td colspan="5">Loading...</td></tr>
+</tbody>
+</table>
+</div>
+
+
+<script>
+const SUPABASE_URL = "https://wevvbzauprknjkoozshp.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldnZiemF1cHJrbmprb296c2hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MTMwMDksImV4cCI6MjA4NDM4OTAwOX0.z1fjSoD9a3rCpGQTaDKazc2LBB3Cti46jMD1uAhGgsY";
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function loadReports() {
+const { data, error } = await db
+  .from("admin_logs")
+  .select("*")
+  .order("created_at", { ascending: false })
+  .order("id", { ascending: false });   // ✅ tie-breaker
+
+
+  const table = document.getElementById("reportTable");
+  table.innerHTML = "";
+
+  if (error || !data || data.length === 0) {
+    table.innerHTML = `<tr><td colspan="5">No reports found</td></tr>`;
+    return;
+  }
+
+  data.forEach(log => {
+    const dateVal =
+      log.created_at ||
+      log.logged_at ||
+      log.timestamp ||
+      log.date_created ||
+      null;
+
+    table.innerHTML += `
+      <tr>
+        <td>${dateVal ? new Date(dateVal).toLocaleString() : "-"}</td>
+        <td>${log.admin_name || "-"}</td>
+        <td>${log.action_type || "-"}</td>
+        <td>${log.target_name || "-"}</td>
+        <td>${log.description || "-"}</td>
+      </tr>
+    `;
+  });
+}
+
+function logout() {
+  localStorage.removeItem("user");
+  window.location.href = "logol.html";
+}
+
+loadReports();
+</script>
+
+
+
+</body>
+</html>

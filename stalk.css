@@ -1,0 +1,123 @@
+/* ===== BASE ===== */
+body {
+  margin: 0;
+  padding: 30px 40px;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: #f0f3f8;
+  color: #333;
+}
+
+/* ===== TOP BAR ===== */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  padding: 12px 22px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+}
+
+.btn.primary {
+  background: #6c7bff;
+  color: white;
+}
+
+.btn.secondary {
+  background: #d1d6e0;
+  color: #333;
+}
+
+.btn.danger {
+  background: #e74c3c;
+  color: white;
+}
+
+/* ===== TITLE ===== */
+h2 {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+/* ===== TABLE ===== */
+.table-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+table {
+  width: 80%;
+  max-width: 900px;
+  background: white;
+  border-collapse: collapse;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+thead {
+  background: #e3e9ff;
+}
+
+th, td {
+  padding: 14px;
+  font-size: 14px;
+}
+
+tbody tr {
+  border-bottom: 1px solid #eee;
+}
+
+.center {
+  text-align: center;
+}
+
+/* ===== DELETE ICON ===== */
+.delete-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #e74c3c;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  transform: scale(1.2);
+}
+
+/* ===== MODAL ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-box {
+  background: white;
+  padding: 30px 40px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.modal-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+/* ===== HIDE ===== */
+.hidden {
+  display: none;
+}

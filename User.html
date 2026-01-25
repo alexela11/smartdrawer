@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>User Dashboard</title>
+<link rel="stylesheet" href="Stur.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="container">
+<img src="sdd-logo.png" class="app-logo" alt="SDD Logo">
+<h2>User System</h2>
+
+<div class="nav-tabs">
+  <button class="tab active" onclick="showTab('dashboard', this)">Dashboard</button>
+  <button class="tab" onclick="showTab('user', this)">User Information</button>
+  <button class="tab" onclick="showTab('password', this)">Change Password</button>
+  <button class="tab" onclick="logout()">Logout</button>
+</div>
+
+<div id="dashboard" class="card"></div>
+
+<div id="user" class="card hidden"></div>
+
+<div id="password" class="card hidden">
+  <h3>Change Password</h3>
+
+  <form id="passwordForm" class="form">
+
+    <label>Old Password</label>
+    <div class="password-field">
+      <input type="password" id="oldPassword" required>
+      <span class="toggle" onclick="togglePassword('oldPassword', this)">👁️</span>
+    </div>
+
+    <label>New Password</label>
+    <div class="password-field">
+      <input type="password" id="newPassword" required oninput="checkStrength()">
+      <span class="toggle" onclick="togglePassword('newPassword', this)">👁️</span>
+    </div>
+
+    <div id="strengthMeter" class="strength">
+      <div id="strengthBar"></div>
+    </div>
+    <small id="strengthText"></small>
+
+    <label>Confirm New Password</label>
+    <div class="password-field">
+      <input type="password" id="confirmPassword" required>
+      <span class="toggle" onclick="togglePassword('confirmPassword', this)">👁️</span>
+    </div>
+
+    <button type="submit">Update Password</button>
+
+    <div id="passwordMessage" class="success hidden">
+      Password updated successfully!
+    </div>
+
+  </form>
+</div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://wevvbzauprknjkoozshp.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldnZiemF1cHJrbmprb296c2hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MTMwMDksImV4cCI6MjA4NDM4OTAwOX0.z1fjSoD9a3rCpGQTaDKazc2LBB3Cti46jMD1uAhGgsY";
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const user = JSON.parse(localStorage.getItem("user"));
+if (!user) window.location.href = "logol.html";
+
+function showTab(tabId, el) {
+  document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(tabId).classList.remove('hidden');
+  el.classList.add('active');
+}
+
+async function loadDashboard() {
+  const { data } = await db
+    .from("drawer_transactions")
+    .select("*")
+    .eq("rfid_uid", user.rfid_uid)
+    .order("accessed_at", { ascending: false });
+
+  const dash = document.getElementById("dashboard");
+  dash.innerHTML = "<h3>Dashboard</h3>";
+
+  if (!data || data.length === 0) {
+    dash.innerHTML += "<p>No drawer activity yet.</p>";
+    return;
+  }
+
+  data.forEach(tx => {
+    dash.innerHTML += `
+      <div class="tx">
+        <strong>${tx.access_type.toUpperCase()}</strong> |
+        ${tx.access_result} |
+        ${new Date(tx.accessed_at).toLocaleString()}
+      </div>`;
+  });
+}
+
+function loadProfile() {
+  const box = document.getElementById("user");
+  box.innerHTML = `
+    <h3>User Information</h3>
+    <p><strong>Name:</strong> ${user.name}</p>
+    <p><strong>Staff ID:</strong> ${user.staff_id}</p>
+    <p><strong>RFID UID:</strong> ${user.rfid_uid}</p>
+    <p><strong>Phone:</strong> ${user.phone || '-'}</p>
+    <p><strong>Email:</strong> ${user.email || '-'}</p>`;
+}
+
+async function hashPassword(password) {
+  const enc = new TextEncoder();
+  const data = enc.encode(password);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2,"0"))
+    .join("");
+}
+
+/* 👁️ Toggle password visibility */
+function togglePassword(id, el) {
+  const input = document.getElementById(id);
+  if (input.type === "password") {
+    input.type = "text";
+    el.textContent = "🙈";
+  } else {
+    input.type = "password";
+    el.textContent = "👁️";
+  }
+}
+
+/* 🔒 Password strength meter */
+function checkStrength() {
+  const val = newPassword.value;
+  const bar = document.getElementById("strengthBar");
+  const text = document.getElementById("strengthText");
+
+  let strength = 0;
+  if (val.length >= 6) strength++;
+  if (val.match(/[A-Z]/)) strength++;
+  if (val.match(/[0-9]/)) strength++;
+  if (val.match(/[^A-Za-z0-9]/)) strength++;
+
+  if (val.length === 0) {
+    bar.style.width = "0%";
+    text.textContent = "";
+    return;
+  }
+
+  if (strength === 1) {
+    bar.style.width = "25%";
+    bar.style.background = "#ef4444";
+    text.textContent = "Weak";
+  } else if (strength === 2) {
+    bar.style.width = "50%";
+    bar.style.background = "#f59e0b";
+    text.textContent = "Medium";
+  } else if (strength === 3) {
+    bar.style.width = "75%";
+    bar.style.background = "#3b82f6";
+    text.textContent = "Strong";
+  } else if (strength === 4) {
+    bar.style.width = "100%";
+    bar.style.background = "#22c55e";
+    text.textContent = "Very Strong";
+  }
+}
+
+/* ✅ Change password with success message */
+async function changePassword(e) {
+  e.preventDefault();
+
+  const oldVal = oldPassword.value;
+  const newVal = newPassword.value;
+  const confirmVal = confirmPassword.value;
+
+  const msg = document.getElementById("passwordMessage");
+  msg.classList.add("hidden");
+
+  if (newVal !== confirmVal) {
+    alert("New password and confirm password do not match.");
+    return;
+  }
+
+  if (newVal.length < 6) {
+    alert("New password must be at least 6 characters long.");
+    return;
+  }
+
+  const oldHash = await hashPassword(oldVal);
+  const newHash = await hashPassword(newVal);
+
+  const { error } = await db
+    .from("user_table")
+    .update({ password_hash: newHash })
+    .eq("id", user.id)
+    .eq("password_hash", oldHash);
+
+  if (error) {
+    alert("Old password is incorrect.");
+  } else {
+    msg.classList.remove("hidden");
+    passwordForm.reset();
+    document.getElementById("strengthBar").style.width = "0%";
+    document.getElementById("strengthText").textContent = "";
+  }
+}
+
+function logout() {
+  localStorage.removeItem("user");
+  window.location.href = "logol.html";
+}
+
+loadDashboard();
+loadProfile();
+document.getElementById("passwordForm")
+  .addEventListener("submit", changePassword);
+</script>
+
+</body>
+</html>

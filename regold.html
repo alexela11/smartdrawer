@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register Account</title>
+  <link rel="stylesheet" href="stol.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<div class="container">
+  <h2>Create Account</h2>
+
+  <form id="registerForm">
+
+    <label>Full Name</label>
+    <input type="text" id="fullName" required>
+
+    <label>Phone Number</label>
+    <input type="tel" id="phone" required>
+
+    <label>Email</label>
+    <input type="email" id="email" required>
+
+    <label>Username</label>
+    <input type="text" id="username" required>
+    <small id="usernameHint" style="color:#666;">
+      Admin: any username | Staff: must be RFID UID given by admin
+    </small>
+
+    <label>Password</label>
+    <input type="password" id="password" required>
+
+    <label>Group</label>
+    <select id="groupNo" required>
+      <option value="">Select</option>
+      <option value="1">Admin</option>
+      <option value="2">Staff</option>
+    </select>
+
+    <button id="registerBtn" type="submit">Register</button>
+
+  </form>
+
+  <p class="link">
+    <a href="logol.html">Back to Login</a>
+  </p>
+</div>
+
+<script>
+const SUPABASE_URL = "https://wevvbzauprknjkoozshp.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldnZiemF1cHJrbmprb296c2hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MTMwMDksImV4cCI6MjA4NDM4OTAwOX0.z1fjSoD9a3rCpGQTaDKazc2LBB3Cti46jMD1uAhGgsY";
+
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function hashPassword(password) {
+  const enc = new TextEncoder();
+  const data = enc.encode(password);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map(b => b.toString(16).padStart(2,"0"))
+    .join("");
+}
+
+async function registerUser(e) {
+  e.preventDefault();
+
+  const name = fullName.value.trim();
+  const phoneVal = phone.value.trim();
+  const emailVal = email.value.trim();
+  const usernameVal = username.value.trim();   // admin: any | staff: RFID UID
+  const passwordVal = password.value;
+  const group_no = parseInt(groupNo.value);
+
+  if (!group_no) {
+    alert("Please select a group.");
+    return;
+  }
+
+  const password_hash = await hashPassword(passwordVal);
+
+  // 🔐 STAFF REGISTRATION (must match drawer registry)
+  if (group_no === 2) {
+
+    // 1) Check RFID exists in drawer registry (users table)
+    const { data: hwUser } = await db
+      .from("users")
+      .select("staff_id, fingerprint_id")
+      .eq("rfid_uid", usernameVal)
+      .single();
+
+    if (!hwUser) {
+      alert("RFID UID not found. Ask admin to register your drawer first.");
+      return;
+    }
+
+    // 2) Prevent duplicate login accounts
+    const { data: existing } = await db
+      .from("user_table")
+      .select("id")
+      .eq("rfid_uid", usernameVal)
+      .single();
+
+    if (existing) {
+      alert("Account already exists for this RFID UID.");
+      return;
+    }
+
+    const { error } = await db.from("user_table").insert([
+      {
+        name: name,
+        staff_id: hwUser.staff_id,
+        rfid_uid: usernameVal,
+        password_hash: password_hash,
+        group_no: 2,
+        phone: phoneVal,
+        email: emailVal,
+        fingerprint_id: hwUser.fingerprint_id
+      }
+    ]);
+
+    if (error) {
+      alert("Register failed: " + error.message);
+    } else {
+      alert("Staff account created successfully!");
+      window.location.href = "logol.html";
+    }
+
+    return;
+  }
+
+  // 🛠️ ADMIN REGISTRATION (no RFID, any username)
+  if (group_no === 1) {
+
+    // Prevent duplicate admin usernames
+    const { data: existingAdmin } = await db
+      .from("user_table")
+      .select("id")
+      .eq("staff_id", usernameVal)
+      .single();
+
+    if (existingAdmin) {
+      alert("Username already taken. Choose another.");
+      return;
+    }
+
+    const { error } = await db.from("user_table").insert([
+      {
+        name: name,
+        staff_id: usernameVal,   // admin username stored here
+        rfid_uid: null,
+        password_hash: password_hash,
+        group_no: 1,
+        phone: phoneVal,
+        email: emailVal,
+        fingerprint_id: null
+      }
+    ]);
+
+    if (error) {
+      alert("Register failed: " + error.message);
+    } else {
+      alert("Admin account created successfully!");
+      window.location.href = "logol.html";
+    }
+
+    return;
+  }
+}
+
+document
+  .getElementById("registerForm")
+  .addEventListener("submit", registerUser);
+</script>
+
+</body>
+</html>

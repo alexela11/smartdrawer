@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Main Menu</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<body>
+
+  <!-- 🔐 ADMIN SESSION GUARD -->
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user || user.group_no !== 1) {
+      window.location.href = "logol.html";
+    }
+  </script>
+
+  <!-- TOP BAR -->
+
+  <!-- TOP BAR -->
+<div class="top-bar">
+  <div class="top-bar-left">
+    <img src="sdd-logo.png" class="app-logo" alt="SDD Logo">
+  </div>
+
+  <div class="top-bar-center">
+    <h1>SMART DRAWER SYSTEM</h1>
+  </div>
+
+  <div class="top-bar-right">
+    <button class="btn danger" onclick="logout()">🚪 Logout</button>
+  </div>
+</div>
+
+
+  <div class="menu-container">
+    <a href="manage.html" class="panel">
+      <div class="panel-title">Manage Users</div>
+      <div class="panel-desc">
+        View registered users and manage fingerprints & RFID
+      </div>
+    </a>
+
+<a href="reports.html" class="panel">
+<div class="panel-title">System Reports</div>
+<div class="panel-desc">View all admin activity logs</div>
+</a>
+
+    <a href="access.html" class="panel">
+      <div class="panel-title">Access</div>
+      <div class="panel-desc">
+        Monitor who accessed the drawer
+      </div>
+    </a>
+  </div>
+
+  <!-- LOGOUT FUNCTION -->
+  <script>
+    function logout() {
+      localStorage.removeItem("user");
+      window.location.href = "logol.html";
+    }
+  </script>
+
+</body>
+</html>
