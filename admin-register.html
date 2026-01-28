@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Register</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+  <h2>Create Admin</h2>
+
+  <label>Full Name</label>
+  <input id="name">
+
+  <label>Username</label>
+  <input id="username">
+
+  <label>Password</label>
+  <input type="password" id="password">
+
+  <button onclick="register()">Register</button>
+  <a href="login.html" class="back">Back to Login</a>
+</div>
+
+<script src="js/supabase.js"></script>
+<script>
+async function register() {
+  const enc = new TextEncoder();
+  const hash = await crypto.subtle.digest("SHA-256", enc.encode(password.value));
+  const password_hash = [...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,"0")).join("");
+
+  await db.from("admin_accounts").insert([{
+    full_name: name.value,
+    username: username.value,
+    password_hash
+  }]);
+
+  alert("Admin created");
+  location.href="login.html";
+}
+</script>
+</body>
+</html>
