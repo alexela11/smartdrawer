@@ -1,89 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Login</title>
-<link rel="stylesheet" href="steel.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Login</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div class="card">
-    <img src="sdd-logo.png" class="app-logo" alt="SDD Logo">
+<div class="container">
+  <h2>Admin Login</h2>
 
-  <h2>Login</h2>
+  <label>Username</label>
+  <input id="username">
 
-  <form id="loginForm">
-    <label>Username</label>
-    <input type="text" id="loginUsername" required>
+  <label>Password</label>
+  <input type="password" id="password">
 
-    <label>Password</label>
-    <input type="password" id="loginPassword" required>
-
-    <button type="submit">Login</button>
-  </form>
-
-  <p>Don't have an account? <a href="regold.html">Register</a></p>
+  <button onclick="login()">Login</button>
 </div>
 
+<script src="js/supabase.js"></script>
 <script>
-const SUPABASE_URL = "https://wevvbzauprknjkoozshp.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndldnZiemF1cHJrbmprb296c2hwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MTMwMDksImV4cCI6MjA4NDM4OTAwOX0.z1fjSoD9a3rCpGQTaDKazc2LBB3Cti46jMD1uAhGgsY";
-
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-async function hashPassword(password) {
+async function login() {
   const enc = new TextEncoder();
-  const data = enc.encode(password);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2,"0"))
-    .join("");
-}
+  const hash = await crypto.subtle.digest("SHA-256", enc.encode(password.value));
+  const password_hash = [...new Uint8Array(hash)].map(b=>b.toString(16).padStart(2,"0")).join("");
 
-async function loginUser(e) {
-  e.preventDefault();
-
-  const username = loginUsername.value.trim();
-  const passwordVal = loginPassword.value;
-  const password_hash = await hashPassword(passwordVal);
-
-  // 🔥 FIX: login via staff_id OR rfid_uid
-  const { data, error } = await db
-    .from("user_table")
+  const { data } = await db
+    .from("admin_accounts")
     .select("*")
-    .or(`staff_id.eq.${username},rfid_uid.eq.${username}`)
+    .eq("username", username.value)
     .eq("password_hash", password_hash)
     .single();
 
-  console.log("LOGIN RESULT:", data, error);
+  if (!data) return alert("Invalid login");
 
-  if (error || !data) {
-    alert("Invalid username or password.");
-    return;
-  }
-
-  // 🚫 Block removed / deactivated users
-  if (data.is_active === false) {
-    alert("Your account is no longer active. Please contact the administrator.");
-    return;
-  }
-
-  // ✅ Save logged-in user
-  localStorage.setItem("user", JSON.stringify(data));
-
-  // 🔁 Redirect by group
-  if (data.group_no === 1) {
-    window.location.href = "index.html";   // admin
-  } else {
-    window.location.href = "User.html";    // staff
-  }
+  localStorage.setItem("admin", JSON.stringify(data));
+  location.href="index.html";
 }
-
-document.getElementById("loginForm")
-  .addEventListener("submit", loginUser);
 </script>
-
-
 </body>
 </html>
