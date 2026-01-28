@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>History</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="container">
+  <h2>Access History</h2>
+  <div id="logs"></div>
+  <a class="back" href="index.html">⬅ Back</a>
+</div>
+
+<script src="js/supabase.js"></script>
+<script>
+async function load(){
+  const { data } = await db
+    .from("access_logs")
+    .select("*")
+    .order("access_time",{ascending:false});
+
+  logs.innerHTML="";
+  data.forEach(l=>{
+    logs.innerHTML+=`
+      <div class="list-item">
+        <div>${l.user_name || "UNAUTHORIZED"}</div>
+        <div class="small">${new Date(l.access_time).toLocaleString()}</div>
+      </div>`;
+  });
+}
+load();
+</script>
+</body>
+</html>
